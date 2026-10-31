@@ -300,7 +300,7 @@ export default function App() {
   if (!data)
     return (
       <main className="loading">
-        <BookOpen size={38} />
+        <img className="loading-logo" src="/lore-icon-192.png" alt="Lore" />
         <h1>{translate("Мой книжный год")}</h1>
         <p>{loadError || translate("Открываем вашу библиотеку…")}</p>
         {loadError && (
@@ -355,7 +355,7 @@ export default function App() {
               onClick={() => go("today")}
               aria-label={translate("Мой книжный год — на главный экран")}
             >
-              <BookOpen size={23} />
+              <img className="app-logo" src="/lore-icon-192.png" alt="" />
               <span>{translate("Мой книжный год")}</span>
             </button>
             <div className="topbar-right">

@@ -20,6 +20,19 @@
 body {
   margin: 0;
 }
+.app-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.loading-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  object-fit: contain;
+}
 button,
 input,
 select {

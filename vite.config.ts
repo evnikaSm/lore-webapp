@@ -19,7 +19,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon-32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "icon-maskable.png"],
+      includeAssets: ["lore-favicon-32.png", "lore-apple-touch-icon.png", "lore-icon-192.png", "lore-icon-512.png", "lore-icon-maskable.png"],
       manifest: {
         name: "Мой книжный год",
         short_name: "Книжный год",
@@ -31,19 +31,19 @@ export default defineConfig({
         start_url: "/",
         icons: [
           {
-            src: "/icon-192.png",
+            src: "/lore-icon-192.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any",
           },
           {
-            src: "/icon-512.png",
+            src: "/lore-icon-512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any",
           },
           {
-            src: "/icon-maskable.png",
+            src: "/lore-icon-maskable.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
