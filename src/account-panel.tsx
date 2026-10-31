@@ -1,4 +1,5 @@
-﻿import { useState } from "react";
+import { translate } from "./i18n";
+import { useState } from "react";
 import { Cloud, RefreshCw, LogOut, UserRound, Download } from "lucide-react";
 import type { AccountLibrary } from "./use-account-library";
 import type { Data } from "./types";
@@ -40,7 +41,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
       setError(
         e instanceof Error
           ? e.message
-          : "Не удалось выполнить действие. Повторите попытку.",
+          : translate("Не удалось выполнить действие. Повторите попытку."),
       );
     } finally {
       setBusy(false);
@@ -51,7 +52,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
     <section className="panel settings-panel account-panel">
       <h3>
         <Cloud size={20} />
-        Ваш аккаунт
+        {translate("Ваш аккаунт")}
       </h3>
       {account.user ? (
         <>
@@ -61,7 +62,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
             </span>
             <div>
               <strong>
-                {account.user.user_metadata.full_name || "Читатель"}
+                {account.user.user_metadata.full_name || translate("Читатель")}
               </strong>
               <span>{account.user.email}</span>
             </div>
@@ -71,19 +72,21 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
             role="status"
           >
             <span className="status-dot" />
-            {phases[account.phase]}
+            {translate(phases[account.phase])}
           </p>
           <p className="muted">
-            Книги, планы, обложки, история чтения и настройки доступны на ваших
-            устройствах после входа в этот Google-аккаунт.
+            {translate(
+              "Книги, планы, обложки, история чтения и настройки доступны на ваших устройствах после входа в этот Google-аккаунт.",
+            )}
           </p>
           {account.error && <p className="notice">{account.error}</p>}
           {isConflict && (
             <div className="account-conflict">
-              <strong>Какую библиотеку оставить?</strong>
+              <strong>{translate("Какую библиотеку оставить?")}</strong>
               <p>
-                На устройстве и в аккаунте есть разные изменения. Сначала можно
-                скачать обе копии.
+                {translate(
+                  "На устройстве и в аккаунте есть разные изменения. Сначала можно скачать обе копии.",
+                )}
               </p>
               <div className="button-row">
                 <button
@@ -92,7 +95,8 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
                     account.data && downloadBackup(account.data, "-device")
                   }
                 >
-                  <Download size={15} />С устройства
+                  <Download size={15} />
+                  {translate("С устройства")}
                 </button>
                 <button
                   className="btn secondary"
@@ -102,7 +106,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
                   }
                 >
                   <Download size={15} />
-                  Из аккаунта
+                  {translate("Из аккаунта")}
                 </button>
               </div>
               <div className="button-row">
@@ -110,13 +114,13 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
                   className="btn primary"
                   onClick={() => setConfirm("local")}
                 >
-                  Оставить с устройства
+                  {translate("Оставить с устройства")}
                 </button>
                 <button
                   className="btn secondary"
                   onClick={() => setConfirm("cloud")}
                 >
-                  Оставить из аккаунта
+                  {translate("Оставить из аккаунта")}
                 </button>
               </div>
             </div>
@@ -127,7 +131,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
               disabled={busy || isConflict}
               onClick={() => setConfirm("import")}
             >
-              Перенести данные с этого устройства
+              {translate("Перенести данные с этого устройства")}
             </button>
           )}
           <div className="account-actions">
@@ -140,7 +144,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
                 size={16}
                 className={account.phase === "syncing" ? "sync-spinning" : ""}
               />
-              Синхронизировать
+              {translate("Синхронизировать")}
             </button>
             <button
               className="text-btn"
@@ -150,15 +154,16 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
               }
             >
               <LogOut size={16} />
-              Выйти
+              {translate("Выйти")}
             </button>
           </div>
         </>
       ) : (
         <>
           <p className="muted">
-            Войдите через Google, чтобы сохранять книги и прогресс в аккаунте и
-            продолжать чтение на другом устройстве.
+            {translate(
+              "Войдите через Google, чтобы сохранять книги и прогресс в аккаунте и продолжать чтение на другом устройстве.",
+            )}
           </p>
           <button
             className="btn google-login full"
@@ -168,17 +173,21 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
             <span className="google-letter" aria-hidden="true">
               G
             </span>
-            {busy ? "Открываем Google…" : "Войти через Google"}
+            {busy
+              ? translate("Открываем Google…")
+              : translate("Войти через Google")}
           </button>
           {!account.configured && (
             <p className="hint">
-              Вход в аккаунт ещё не подключён. Пока библиотека сохраняется на
-              этом устройстве.
+              {translate(
+                "Вход в аккаунт ещё не подключён. Пока библиотека сохраняется на этом устройстве.",
+              )}
             </p>
           )}
           <p className="hint">
-            Имеющиеся на устройстве книги останутся с вами. После входа их можно
-            перенести в аккаунт.
+            {translate(
+              "Имеющиеся на устройстве книги останутся с вами. После входа их можно перенести в аккаунт.",
+            )}
           </p>
         </>
       )}
@@ -191,10 +200,10 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
         <Modal
           title={
             confirm === "logout"
-              ? "Выйти из аккаунта?"
+              ? translate("Выйти из аккаунта?")
               : confirm === "import"
-                ? "Перенести локальную библиотеку?"
-                : "Подтвердить выбор библиотеки"
+                ? translate("Перенести локальную библиотеку?")
+                : translate("Подтвердить выбор библиотеки")
           }
           onClose={() => {
             if (!busy) setConfirm(null);
@@ -202,12 +211,20 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
         >
           <p className="muted">
             {confirm === "logout"
-              ? "Некоторые изменения ещё не сохранены в облаке. Они останутся на этом устройстве и отправятся после повторного входа в тот же аккаунт."
+              ? translate(
+                  "Некоторые изменения ещё не сохранены в облаке. Они останутся на этом устройстве и отправятся после повторного входа в тот же аккаунт.",
+                )
               : confirm === "import"
-                ? "Книги из режима без аккаунта будут добавлены к вашей библиотеке. Существующие книги аккаунта и их история не будут заменены."
+                ? translate(
+                    "Книги из режима без аккаунта будут добавлены к вашей библиотеке. Существующие книги аккаунта и их история не будут заменены.",
+                  )
                 : confirm === "local"
-                  ? "Библиотека в аккаунте будет заменена версией с этого устройства. На остальных устройствах появится выбранная версия."
-                  : "На этом устройстве будет открыта библиотека из аккаунта. Несинхронизированные изменения устройства будут заменены."}
+                  ? translate(
+                      "Библиотека в аккаунте будет заменена версией с этого устройства. На остальных устройствах появится выбранная версия.",
+                    )
+                  : translate(
+                      "На этом устройстве будет открыта библиотека из аккаунта. Несинхронизированные изменения устройства будут заменены.",
+                    )}
           </p>
           {confirm === "import" && (
             <button
@@ -220,13 +237,14 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
               }
             >
               <Download size={16} />
-              Скачать локальную копию
+              {translate("Скачать локальную копию")}
             </button>
           )}
           {(confirm === "local" || confirm === "cloud") && (
             <p className="notice">
-              Перед заменой сохраните нужные резервные копии кнопками в разделе
-              аккаунта.
+              {translate(
+                "Перед заменой сохраните нужные резервные копии кнопками в разделе аккаунта.",
+              )}
             </p>
           )}
           <div className="modal-actions">
@@ -235,7 +253,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
               disabled={busy}
               onClick={() => setConfirm(null)}
             >
-              Отмена
+              {translate("Отмена")}
             </button>
             <button
               className="btn primary"
@@ -253,7 +271,7 @@ export function AccountPanel({ account }: { account: AccountLibrary }) {
                 )
               }
             >
-              {busy ? "Подождите…" : "Подтвердить"}
+              {busy ? translate("Подождите…") : translate("Подтвердить")}
             </button>
           </div>
           {error && (

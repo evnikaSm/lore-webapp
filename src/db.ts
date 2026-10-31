@@ -1,4 +1,5 @@
-﻿import Dexie, { type Table } from "dexie";
+import { translate } from "./i18n";
+import Dexie, { type Table } from "dexie";
 import type { Data, Book, Settings } from "./types";
 import { defaultSettings } from "./types";
 import { emptyCache, type Cache, type CacheRepository } from "./sync";
@@ -110,7 +111,9 @@ export function parseBackup(text: string): Data {
     new Set(d.books.map((b) => b.id)).size !== d.books.length
   )
     throw new Error(
-      "Файл не является корректной резервной копией «Моего книжного года».",
+      translate(
+        "Файл не является корректной резервной копией «Моего книжного года».",
+      ),
     );
   return { version: 1, books: d.books, settings: d.settings };
 }

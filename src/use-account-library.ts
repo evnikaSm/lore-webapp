@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from "react";
+import { translate } from "./i18n";
+import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { cacheRepository } from "./db";
 import { cloudRepository, supabase, loginWithGoogle, logout } from "./cloud";
@@ -28,7 +29,9 @@ export function useAccountLibrary() {
     const hash = new URLSearchParams(window.location.hash.slice(1)),
       query = new URLSearchParams(window.location.search);
     if (hash.has("error") || query.has("error")) {
-      setAuthError("Вход через Google не завершён. Попробуйте ещё раз.");
+      setAuthError(
+        translate("Вход через Google не завершён. Попробуйте ещё раз."),
+      );
       history.replaceState(null, "", window.location.pathname);
     }
     return () => subscription.unsubscribe();
@@ -39,7 +42,9 @@ export function useAccountLibrary() {
         .open(user?.id ?? null)
         .catch(() =>
           setAuthError(
-            "Не удалось открыть библиотеку на устройстве. Перезагрузите приложение.",
+            translate(
+              "Не удалось открыть библиотеку на устройстве. Перезагрузите приложение.",
+            ),
           ),
         );
   }, [authReady, user?.id, controller]);

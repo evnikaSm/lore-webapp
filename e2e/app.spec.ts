@@ -27,6 +27,7 @@ async function createBook(
   await expect(modal).not.toBeVisible();
 }
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("lore-welcome-seen", "1"));
   await page.clock.install({ time: new Date("2026-10-30T12:00:00+01:00") });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Сегодня" })).toBeVisible();

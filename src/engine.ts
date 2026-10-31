@@ -1,4 +1,5 @@
-﻿import { addDays, format, parseISO, differenceInCalendarDays } from "date-fns";
+import { translate, getIntlLocale } from "./i18n";
+import { addDays, format, parseISO, differenceInCalendarDays } from "date-fns";
 import type { Book, Entry } from "./types";
 // Completed books belong to their actual completion year; plans keep their chosen year.
 export const bookYear = (b: Book) =>
@@ -10,7 +11,7 @@ export const dateKey = (date: Date) => format(date, "yyyy-MM-dd");
 export const plus = (date: string, days: number) =>
   dateKey(addDays(parseISO(date), days));
 export const pretty = (date: string, full = false) =>
-  parseISO(date).toLocaleDateString("ru-RU", {
+  parseISO(date).toLocaleDateString(getIntlLocale(), {
     day: "numeric",
     month: "long",
     ...(full ? { year: "numeric" as const } : {}),
@@ -126,13 +127,15 @@ export function record(
   now = today(),
 ): Book {
   if (!Number.isInteger(amount) || amount <= 0)
-    throw new Error("Введите целое число больше нуля.");
+    throw new Error(translate("Введите целое число больше нуля."));
   if (date < b.start || date > now)
     throw new Error(
-      "Дата записи должна быть между началом чтения и сегодняшним днём.",
+      translate(
+        "Дата записи должна быть между началом чтения и сегодняшним днём.",
+      ),
     );
   if (amount > b.total - read(b))
-    throw new Error("Это больше оставшегося объёма книги.");
+    throw new Error(translate("Это больше оставшегося объёма книги."));
   const entry: Entry = { id: crypto.randomUUID(), date, amount };
   const next = { ...b, entries: [...b.entries, entry] };
   if (read(next) === b.total)

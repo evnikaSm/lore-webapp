@@ -19,7 +19,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon-192.png", "icon-512.png"],
+      includeAssets: ["favicon-32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "icon-maskable.png"],
       manifest: {
         name: "Мой книжный год",
         short_name: "Книжный год",

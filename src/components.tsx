@@ -1,4 +1,5 @@
-﻿import {
+import { translate } from "./i18n";
+import {
   useState,
   useContext,
   type FormEvent,
@@ -27,7 +28,7 @@ import {
 } from "./engine";
 export const weekdays = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 export const unitLabel = (b: Pick<Book, "unit">) =>
-  b.unit === "pages" ? "стр." : "гл.";
+  b.unit === "pages" ? translate("стр.") : translate("гл.");
 export function Modal({
   title,
   children,
@@ -53,14 +54,21 @@ export function Modal({
     <dialog
       ref={ref}
       className={wide ? "modal wide" : "modal"}
-      onCancel={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="modal-head">
         <h2>{title}</h2>
-        <button className="icon-btn" onClick={onClose} aria-label="Закрыть">
+        <button
+          className="icon-btn"
+          onClick={onClose}
+          aria-label={translate("Закрыть")}
+        >
           <X size={21} />
         </button>
       </div>
@@ -89,7 +97,7 @@ export function RestPicker({
             )
           }
         >
-          {weekdays[n]}
+          {translate(weekdays[n])}
         </button>
       ))}
     </div>
@@ -109,15 +117,15 @@ export function BookCover({
       className={`book-cover ${large ? "large" : ""} cover-${book.title.length % 3} ${turning ? "is-turning" : ""}`}
     >
       {book.cover ? (
-        <img src={book.cover} alt={`Обложка «${book.title}»`} />
+        <img src={book.cover} alt={translate("Обложка «{0}»", [book.title])} />
       ) : (
         <>
           <span className="cover-author">
-            {book.author || "Личная библиотека"}
+            {book.author || translate("Личная библиотека")}
           </span>
           <span className="cover-ornament">✳</span>
           <strong>{book.title}</strong>
-          <span className="cover-bottom">МОЙ КНИЖНЫЙ ГОД</span>
+          <span className="cover-bottom">{translate("МОЙ КНИЖНЫЙ ГОД")}</span>
         </>
       )}
       {turning && (
@@ -199,9 +207,16 @@ export function BookWizard({
     !!book &&
     (book.entries.length > 0 ||
       Object.keys(book.tasks).some((d) => d < today()));
-  const labels = ["Книга", "Объём", "Ваш ритм", "Дни отдыха", "Готовый план"];
+  const labels = [
+    translate("Книга"),
+    translate("Объём"),
+    translate("Ваш ритм"),
+    translate("Дни отдыха"),
+    translate("Готовый план"),
+  ];
   function validate() {
-    if (step === 0 && !draft.title.trim()) return "Введите название книги.";
+    if (step === 0 && !draft.title.trim())
+      return translate("Введите название книги.");
     if (
       step >= 1 &&
       (!Number.isSafeInteger(draft.total) ||
@@ -214,7 +229,9 @@ export function BookWizard({
         draft.pages < 0 ||
         draft.pages > 1000000)
     )
-      return "Проверьте объём: от 1 до 1 000 000, начальный прогресс меньше общего объёма.";
+      return translate(
+        "Проверьте объём: от 1 до 1 000 000, начальный прогресс меньше общего объёма.",
+      );
     if (
       step === 2 &&
       (!draft.start ||
@@ -227,16 +244,18 @@ export function BookWizard({
         draft.pace < 1 ||
         draft.pace > 1000000)
     )
-      return "Проверьте даты, год и ежедневную норму.";
+      return translate("Проверьте даты, год и ежедневную норму.");
     if (step >= 3 && draft.restDays.length === 7 && draft.status === "reading")
-      return "Оставьте хотя бы один день для чтения.";
+      return translate("Оставьте хотя бы один день для чтения.");
     if (
       step >= 3 &&
       draft.mode === "deadline" &&
       days === 0 &&
       draft.status === "reading"
     )
-      return "До выбранной даты нет доступных дней. Измените срок или выходные.";
+      return translate(
+        "До выбранной даты нет доступных дней. Измените срок или выходные.",
+      );
     return "";
   }
   async function submit(e: FormEvent) {
@@ -262,7 +281,11 @@ export function BookWizard({
       });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось сохранить книгу.");
+      setError(
+        e instanceof Error
+          ? e.message
+          : translate("Не удалось сохранить книгу."),
+      );
     } finally {
       setBusy(false);
     }
@@ -275,17 +298,21 @@ export function BookWizard({
       ) ||
       file.size > 3 * 1024 * 1024
     ) {
-      setError("Выберите PNG, JPEG, WebP или GIF до 3 МБ.");
+      setError(translate("Выберите PNG, JPEG, WebP или GIF до 3 МБ."));
       return;
     }
     const r = new FileReader();
     r.onload = () => change("cover", String(r.result));
-    r.onerror = () => setError("Не удалось прочитать изображение.");
+    r.onerror = () => setError(translate("Не удалось прочитать изображение."));
     r.readAsDataURL(file);
   }
   return (
     <Modal
-      title={book ? "Настройки книги" : "Новая история начинается здесь"}
+      title={
+        book
+          ? translate("Настройки книги")
+          : translate("Новая история начинается здесь")
+      }
       onClose={onClose}
       wide
     >
@@ -300,30 +327,33 @@ export function BookWizard({
       <form onSubmit={submit} className="wizard-form">
         {step === 0 && (
           <>
-            <p className="eyebrow">ШАГ 1 · ВАША БИБЛИОТЕКА</p>
-            <h3>Какую книгу будем читать?</h3>
+            <p className="eyebrow">{translate("ШАГ 1 · ВАША БИБЛИОТЕКА")}</p>
+            <h3>{translate("Какую книгу будем читать?")}</h3>
             <label>
-              Название книги
+              {translate("Название книги")}
               <input
                 autoFocus
                 value={draft.title}
                 maxLength={180}
-                placeholder="Например, Маленькие женщины"
+                placeholder={translate("Например, Маленькие женщины")}
                 onChange={(e) => change("title", e.target.value)}
               />
             </label>
             <label>
-              Автор <span className="muted">· необязательно</span>
+              {translate("Автор ")}
+              <span className="muted">{translate("· необязательно")}</span>
               <input
                 value={draft.author}
                 maxLength={140}
-                placeholder="Луиза Мэй Олкотт"
+                placeholder={translate("Луиза Мэй Олкотт")}
                 onChange={(e) => change("author", e.target.value)}
               />
             </label>
             <label className="upload-label">
               <Upload size={18} />
-              {draft.cover ? "Заменить обложку" : "Загрузить обложку"}
+              {draft.cover
+                ? translate("Заменить обложку")
+                : translate("Загрузить обложку")}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/gif"
@@ -332,13 +362,13 @@ export function BookWizard({
             </label>
             {draft.cover && (
               <div className="cover-preview">
-                <img src={draft.cover} alt="Выбранная обложка" />
+                <img src={draft.cover} alt={translate("Выбранная обложка")} />
                 <button
                   type="button"
                   className="text-btn"
                   onClick={() => change("cover", undefined)}
                 >
-                  Убрать обложку
+                  {translate("Убрать обложку")}
                 </button>
               </div>
             )}
@@ -346,8 +376,8 @@ export function BookWizard({
         )}
         {step === 1 && (
           <>
-            <p className="eyebrow">ШАГ 2 · МАЛЕНЬКИМИ ШАГАМИ</p>
-            <h3>Как вам удобнее считать?</h3>
+            <p className="eyebrow">{translate("ШАГ 2 · МАЛЕНЬКИМИ ШАГАМИ")}</p>
+            <h3>{translate("Как вам удобнее считать?")}</h3>
             <div className="segmented">
               <button
                 type="button"
@@ -355,7 +385,7 @@ export function BookWizard({
                 className={draft.unit === "pages" ? "active" : ""}
                 onClick={() => changeUnit("pages")}
               >
-                Страницы
+                {translate("Страницы")}
               </button>
               <button
                 type="button"
@@ -363,11 +393,14 @@ export function BookWizard({
                 className={draft.unit === "chapters" ? "active" : ""}
                 onClick={() => changeUnit("chapters")}
               >
-                Главы
+                {translate("Главы")}
               </button>
             </div>
             <label>
-              Всего {draft.unit === "pages" ? "страниц" : "глав"}
+              {translate("Всего ")}
+              {draft.unit === "pages"
+                ? translate("страниц")
+                : translate("глав")}
               <input
                 type="number"
                 min="1"
@@ -379,7 +412,8 @@ export function BookWizard({
             </label>
             {draft.unit === "chapters" && (
               <label>
-                Страниц в книге <span className="muted">· для справки</span>
+                {translate("Страниц в книге ")}
+                <span className="muted">{translate("· для справки")}</span>
                 <input
                   type="number"
                   min="0"
@@ -390,7 +424,7 @@ export function BookWizard({
               </label>
             )}
             <label>
-              Уже прочитано до начала учёта
+              {translate("Уже прочитано до начала учёта")}
               <input
                 type="number"
                 min="0"
@@ -402,33 +436,39 @@ export function BookWizard({
             </label>
             <p className="hint">
               {locked
-                ? "Объём и единица зафиксированы, чтобы сохранить точность истории."
-                : "Начальный прогресс учитывается в книге, но не добавляется в статистику ежедневного чтения."}
+                ? translate(
+                    "Объём и единица зафиксированы, чтобы сохранить точность истории.",
+                  )
+                : translate(
+                    "Начальный прогресс учитывается в книге, но не добавляется в статистику ежедневного чтения.",
+                  )}
             </p>
           </>
         )}
         {step === 2 && (
           <>
-            <p className="eyebrow">ШАГ 3 · БЕЗ СПЕШКИ</p>
-            <h3>Выберите свой ритм</h3>
+            <p className="eyebrow">{translate("ШАГ 3 · БЕЗ СПЕШКИ")}</p>
+            <h3>{translate("Выберите свой ритм")}</h3>
             <button
               type="button"
               className={`choice ${draft.mode === "deadline" ? "selected" : ""}`}
               onClick={() => change("mode", "deadline")}
             >
-              <strong>Распределить до даты</strong>
-              <small>Равномерный план с учётом дней отдыха</small>
+              <strong>{translate("Распределить до даты")}</strong>
+              <small>
+                {translate("Равномерный план с учётом дней отдыха")}
+              </small>
             </button>
             <button
               type="button"
               className={`choice ${draft.mode === "pace" ? "selected" : ""}`}
               onClick={() => change("mode", "pace")}
             >
-              <strong>Читать в своём темпе</strong>
-              <small>Удобное количество каждый день</small>
+              <strong>{translate("Читать в своём темпе")}</strong>
+              <small>{translate("Удобное количество каждый день")}</small>
             </button>
             <fieldset className="reading-unit-picker">
-              <legend>Единицы чтения</legend>
+              <legend>{translate("Единицы чтения")}</legend>
               <div className="segmented">
                 <button
                   type="button"
@@ -437,7 +477,7 @@ export function BookWizard({
                   className={draft.unit === "pages" ? "active" : ""}
                   onClick={() => changeUnit("pages")}
                 >
-                  Страницы
+                  {translate("Страницы")}
                 </button>
                 <button
                   type="button"
@@ -446,14 +486,17 @@ export function BookWizard({
                   className={draft.unit === "chapters" ? "active" : ""}
                   onClick={() => changeUnit("chapters")}
                 >
-                  Главы
+                  {translate("Главы")}
                 </button>
               </div>
             </fieldset>
             {draft.unit !== volumeUnit && (
               <div className="unit-volume-fields">
                 <label>
-                  Всего {draft.unit === "pages" ? "страниц" : "глав"}
+                  {translate("Всего ")}
+                  {draft.unit === "pages"
+                    ? translate("страниц")
+                    : translate("глав")}
                   <input
                     type="number"
                     min="1"
@@ -461,14 +504,14 @@ export function BookWizard({
                     value={draft.total || ""}
                     placeholder={
                       draft.unit === "pages"
-                        ? "Количество страниц"
-                        : "Количество глав"
+                        ? translate("Количество страниц")
+                        : translate("Количество глав")
                     }
                     onChange={(e) => change("total", +e.target.value)}
                   />
                 </label>
                 <label>
-                  Уже прочитано до начала учёта
+                  {translate("Уже прочитано до начала учёта")}
                   <input
                     type="number"
                     min="0"
@@ -481,12 +524,15 @@ export function BookWizard({
             )}
             {locked && (
               <p className="hint">
-                Единица зафиксирована, чтобы сохранить историю чтения.
+                {translate(
+                  "Единица зафиксирована, чтобы сохранить историю чтения.",
+                )}
               </p>
             )}
             {draft.mode === "pace" && (
               <label>
-                Дневная норма, {unitLabel(draft)}
+                {translate("Дневная норма, ")}
+                {unitLabel(draft)}
                 <input
                   type="number"
                   min="1"
@@ -498,7 +544,7 @@ export function BookWizard({
             )}
             <div className="form-row">
               <label>
-                Начало чтения
+                {translate("Начало чтения")}
                 <input
                   type="date"
                   value={draft.start}
@@ -507,7 +553,7 @@ export function BookWizard({
                 />
               </label>
               <label>
-                Желаемая дата окончания
+                {translate("Желаемая дата окончания")}
                 <input
                   type="date"
                   value={draft.deadline}
@@ -517,7 +563,9 @@ export function BookWizard({
             </div>
             <div className="form-row">
               <label>
-                {draft.status === "completed" ? "Год завершения" : "Год цели"}
+                {draft.status === "completed"
+                  ? translate("Год завершения")
+                  : translate("Год цели")}
                 <input
                   type="number"
                   min="1900"
@@ -528,7 +576,7 @@ export function BookWizard({
                 />
               </label>
               <label>
-                Полка
+                {translate("Полка")}
                 <select
                   value={
                     draft.status === "completed" ? "completed" : draft.status
@@ -539,11 +587,13 @@ export function BookWizard({
                   }
                 >
                   {draft.status === "completed" && (
-                    <option value="completed">Прочитано</option>
+                    <option value="completed">{translate("Прочитано")}</option>
                   )}
-                  <option value="reading">Читаю сейчас</option>
-                  <option value="wishlist">Хочу прочитать</option>
-                  <option value="paused">Приостановлено</option>
+                  <option value="reading">{translate("Читаю сейчас")}</option>
+                  <option value="wishlist">
+                    {translate("Хочу прочитать")}
+                  </option>
+                  <option value="paused">{translate("Приостановлено")}</option>
                 </select>
               </label>
             </div>
@@ -551,19 +601,20 @@ export function BookWizard({
         )}
         {step === 3 && (
           <>
-            <p className="eyebrow">ШАГ 4 · ВРЕМЯ ДЛЯ СЕБЯ</p>
-            <h3>Отдых — тоже часть плана</h3>
+            <p className="eyebrow">{translate("ШАГ 4 · ВРЕМЯ ДЛЯ СЕБЯ")}</p>
+            <h3>{translate("Отдых — тоже часть плана")}</h3>
             <p className="muted">
-              В выбранные дни заданий не будет. Читать для удовольствия можно
-              всегда.
+              {translate(
+                "В выбранные дни заданий не будет. Читать для удовольствия можно всегда.",
+              )}
             </p>
-            <label>Регулярные выходные</label>
+            <label>{translate("Регулярные выходные")}</label>
             <RestPicker
               value={draft.restDays}
               onChange={(v) => change("restDays", v)}
             />
             <label>
-              Разовый выходной
+              {translate("Разовый выходной")}
               <input
                 type="date"
                 onChange={(e) => {
@@ -592,8 +643,9 @@ export function BookWizard({
               ))}
             </div>
             <p className="hint">
-              Отдельные даты можно отмечать и в календаре. Уже прошедшие задания
-              при изменении настроек сохраняются.
+              {translate(
+                "Отдельные даты можно отмечать и в календаре. Уже прошедшие задания при изменении настроек сохраняются.",
+              )}
             </p>
           </>
         )}
@@ -601,33 +653,41 @@ export function BookWizard({
           <>
             <div className="plan-summary">
               <BookOpen size={34} />
-              <p className="eyebrow">ВАШ НОВЫЙ ЧИТАТЕЛЬСКИЙ ПЛАН</p>
+              <p className="eyebrow">
+                {translate("ВАШ НОВЫЙ ЧИТАТЕЛЬСКИЙ ПЛАН")}
+              </p>
               <h3>{draft.title}</h3>
               <p>
-                {remaining} {unitLabel(draft)} осталось ·{" "}
+                {remaining} {unitLabel(draft)}
+                {translate(" осталось ·")}{" "}
                 {draft.mode === "deadline"
-                  ? "до " + pretty(draft.deadline)
-                  : draft.pace + " " + unitLabel(draft) + " в день"}
+                  ? translate("до ") + pretty(draft.deadline)
+                  : draft.pace + " " + unitLabel(draft) + translate(" в день")}
               </p>
               <p className="muted">
                 {draft.status === "wishlist"
-                  ? "Книга появится на полке «Хочу прочитать»."
+                  ? translate("Книга появится на полке «Хочу прочитать».")
                   : draft.status === "paused"
-                    ? "План будет приостановлен."
+                    ? translate("План будет приостановлен.")
                     : prediction
-                      ? "Прогноз завершения: " + pretty(prediction, true)
-                      : "Прогноз появится после начала чтения."}
+                      ? translate("Прогноз завершения: ") +
+                        pretty(prediction, true)
+                      : translate("Прогноз появится после начала чтения.")}
               </p>
             </div>
             {prediction && prediction > draft.deadline && (
               <p className="notice">
-                В этом темпе вы закончите позже желаемой даты. Чтобы успеть,
-                нужно около {Math.ceil(remaining / Math.max(1, days))}{" "}
-                {unitLabel(draft)} в доступный день.
+                {translate(
+                  "В этом темпе вы закончите позже желаемой даты. Чтобы успеть, нужно около ",
+                )}
+                {Math.ceil(remaining / Math.max(1, days))} {unitLabel(draft)}
+                {translate(" в доступный день.")}
               </p>
             )}
             <p className="hint">
-              Можно менять ритм в любой момент. История чтения останется с вами.
+              {translate(
+                "Можно менять ритм в любой момент. История чтения останется с вами.",
+              )}
             </p>
           </>
         )}
@@ -647,19 +707,19 @@ export function BookWizard({
               }}
             >
               <ChevronLeft size={16} />
-              Назад
+              {translate("Назад")}
             </button>
           ) : (
             <button type="button" className="btn secondary" onClick={onClose}>
-              Отмена
+              {translate("Отмена")}
             </button>
           )}
           <button className="btn primary" disabled={busy}>
             {busy
-              ? "Сохраняем…"
+              ? translate("Сохраняем…")
               : step === 4
-                ? "Сохранить книгу"
-                : "Продолжить"}
+                ? translate("Сохранить книгу")
+                : translate("Продолжить")}
             {step === 4 ? <Check size={17} /> : <ChevronRight size={17} />}
           </button>
         </div>

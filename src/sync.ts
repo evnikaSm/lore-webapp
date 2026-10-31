@@ -1,4 +1,5 @@
-﻿import type { Data } from "./types";
+import { translate } from "./i18n";
+import type { Data } from "./types";
 import { defaultSettings } from "./types";
 export interface Cache {
   id: string;
@@ -85,7 +86,9 @@ export function mergeGuest(account: Data, guest: Data): Data {
     const existing = books.get(b.id);
     if (existing && !equivalent(existing, b))
       throw new Error(
-        "У этой книги уже есть другая версия в аккаунте. Сохраните резервную копию и перенесите нужные данные через импорт JSON.",
+        translate(
+          "У этой книги уже есть другая версия в аккаунте. Сохраните резервную копию и перенесите нужные данные через импорт JSON.",
+        ),
       );
     books.set(b.id, b);
   }
@@ -171,10 +174,13 @@ export class LibraryController {
   async mutate(update: (data: Data) => Data, importGuest = false) {
     const epoch = this.epoch,
       owner = this.owner;
-    if (!this.cache) throw new Error("Дождитесь загрузки библиотеки.");
+    if (!this.cache)
+      throw new Error(translate("Дождитесь загрузки библиотеки."));
     await this.serial(async () => {
       if (epoch !== this.epoch)
-        throw new Error("Учётная запись изменилась. Повторите действие.");
+        throw new Error(
+          translate("Учётная запись изменилась. Повторите действие."),
+        );
       const cache = await this.local.transact(owner, (c) => ({
         ...c,
         value: update(c.value),
@@ -335,10 +341,18 @@ export class LibraryController {
 export function syncError(error: unknown) {
   const code = (error as { code?: string })?.code;
   if (code === "PGRST202" || code === "42P01")
-    return "Хранилище аккаунта ещё не подключено. Обратитесь к владельцу приложения.";
+    return translate(
+      "Хранилище аккаунта ещё не подключено. Обратитесь к владельцу приложения.",
+    );
   if (code === "401" || code === "PGRST301" || code === "28000")
-    return "Войдите в аккаунт повторно, чтобы продолжить синхронизацию.";
+    return translate(
+      "Войдите в аккаунт повторно, чтобы продолжить синхронизацию.",
+    );
   if (code === "22023" || code === "23514")
-    return "Не удалось загрузить библиотеку: проверьте её объём и формат.";
-  return "Не удалось связаться с аккаунтом. Изменения сохранены на устройстве; синхронизацию можно повторить.";
+    return translate(
+      "Не удалось загрузить библиотеку: проверьте её объём и формат.",
+    );
+  return translate(
+    "Не удалось связаться с аккаунтом. Изменения сохранены на устройстве; синхронизацию можно повторить.",
+  );
 }

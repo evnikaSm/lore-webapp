@@ -1,4 +1,7 @@
 ﻿import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("lore-welcome-seen", "1"));
+});
 const owner = "11111111-1111-4111-8111-111111111111";
 const payload = (n: number) => ({
   version: 1,

@@ -1,4 +1,14 @@
-﻿import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  translate,
+  useLanguage,
+  getDateLocale,
+  getIntlLocale,
+  readPreference,
+  savePreference,
+} from "./i18n";
+import { LanguagePicker } from "./language-picker";
+import { WelcomeDialog } from "./welcome-dialog";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   BookOpen,
   Sun,
@@ -45,7 +55,6 @@ import {
   parseISO,
   format,
 } from "date-fns";
-import { ru } from "date-fns/locale";
 import {
   ReadingAnimationContext,
   type ReadingAnimation,
@@ -131,7 +140,10 @@ function ProgressRing({
     c = 2 * Math.PI * r;
   return (
     <div className="ring" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 100 100" aria-label={`Прогресс ${Math.round(value)}%`}>
+      <svg
+        viewBox="0 0 100 100"
+        aria-label={translate("Прогресс {0}%", [Math.round(value)])}
+      >
         <circle
           cx="50"
           cy="50"
@@ -166,7 +178,17 @@ function ProgressRing({
   );
 }
 export default function App() {
+  useLanguage();
+  const [welcome, setWelcome] = useState(
+    () => readPreference("lore-welcome-seen") !== "1",
+  );
   const account = useAccountLibrary();
+  useEffect(() => {
+    if (account.user) {
+      savePreference("lore-welcome-seen", "1");
+      setWelcome(false);
+    }
+  }, [account.user?.id]);
   const data = account.data;
   const loadError = account.authError;
   const [page, setPage] = useState<Page>("today");
@@ -221,7 +243,9 @@ export default function App() {
       await account.commit(update);
     } catch (e) {
       setToast(
-        "Не удалось сохранить данные. Проверьте свободное место и разрешения браузера.",
+        translate(
+          "Не удалось сохранить данные. Проверьте свободное место и разрешения браузера.",
+        ),
       );
       throw e;
     }
@@ -240,7 +264,7 @@ export default function App() {
         ? d.books.map((x) => (x.id === b.id ? b : x))
         : [...d.books, b],
     }));
-    setToast("Книга сохранена. Приятного чтения!");
+    setToast(translate("Книга сохранена. Приятного чтения!"));
   }
   async function addRead(b: Book, amount: number, date: string) {
     let completed = false;
@@ -258,8 +282,8 @@ export default function App() {
       }),
     }));
     const message = completed
-      ? "Книга завершена! Ещё одна история в вашей коллекции."
-      : "Чтение сохранено. Ещё один шаг вперёд!";
+      ? translate("Книга завершена! Ещё одна история в вашей коллекции.")
+      : translate("Чтение сохранено. Ещё один шаг вперёд!");
     setReadingAnimation({
       book: savedBook,
       token: crypto.randomUUID(),
@@ -277,11 +301,11 @@ export default function App() {
     return (
       <main className="loading">
         <BookOpen size={38} />
-        <h1>Мой книжный год</h1>
-        <p>{loadError || "Открываем вашу библиотеку…"}</p>
+        <h1>{translate("Мой книжный год")}</h1>
+        <p>{loadError || translate("Открываем вашу библиотеку…")}</p>
         {loadError && (
           <button className="btn primary" onClick={() => location.reload()}>
-            Попробовать снова
+            {translate("Попробовать снова")}
           </button>
         )}
       </main>
@@ -293,7 +317,7 @@ export default function App() {
   const goal = data.settings.goals[year] ?? 20;
   const yearSelect = (
     <select
-      aria-label="Год читательской цели"
+      aria-label={translate("Год читательской цели")}
       className="year-select"
       value={year}
       onChange={(e) => setYear(+e.target.value)}
@@ -318,7 +342,7 @@ export default function App() {
   const addButton = (
     <button className="btn primary" onClick={() => setWizard("new")}>
       <Plus size={18} />
-      Добавить книгу
+      {translate("Добавить книгу")}
     </button>
   );
   return (
@@ -329,16 +353,16 @@ export default function App() {
             <button
               className="app-brand"
               onClick={() => go("today")}
-              aria-label="Мой книжный год — на главный экран"
+              aria-label={translate("Мой книжный год — на главный экран")}
             >
               <BookOpen size={23} />
-              <span>Мой книжный год</span>
+              <span>{translate("Мой книжный год")}</span>
             </button>
             <div className="topbar-right">
               {!online && (
                 <span
                   className="offline-label"
-                  aria-label="Нет подключения к интернету"
+                  aria-label={translate("Нет подключения к интернету")}
                 >
                   <WifiOff size={17} />
                 </span>
@@ -352,9 +376,11 @@ export default function App() {
                 <div className="page-heading today-heading">
                   <div>
                     <p className="eyebrow date">
-                      {format(parseISO(now), "EEEE, d MMMM", { locale: ru })}
+                      {format(parseISO(now), "EEEE, d MMMM", {
+                        locale: getDateLocale(),
+                      })}
                     </p>
-                    <h1>Сегодня</h1>
+                    <h1>{translate("Сегодня")}</h1>
                   </div>
                   {active.length > 0 && addButton}
                 </div>
@@ -362,20 +388,20 @@ export default function App() {
                   <div className="summary-grid">
                     <SummaryCard
                       icon={<BookOpen size={20} />}
-                      label="План"
+                      label={translate("План")}
                       books={active}
                       value={(b) => daily(b, now).target}
                     />
                     <SummaryCard
                       icon={<CheckCheck size={20} />}
-                      label="Прочитано"
+                      label={translate("Прочитано")}
                       books={books}
                       value={(b) => actual(b, now)}
                       green
                     />
                     <SummaryCard
                       icon={<Coffee size={20} />}
-                      label="Осталось"
+                      label={translate("Осталось")}
                       books={active}
                       value={(b) => daily(b, now).left}
                     />
@@ -390,10 +416,11 @@ export default function App() {
                   <section id="daily-books">
                     <div className="section-heading">
                       <h2>
-                        Читаю сейчас <span>{active.length}</span>
+                        {translate("Читаю сейчас ")}
+                        <span>{active.length}</span>
                       </h2>
                       <button className="text-btn" onClick={() => go("books")}>
-                        Все книги
+                        {translate("Все книги")}
                         <ArrowUpRight size={16} />
                       </button>
                     </div>
@@ -415,13 +442,14 @@ export default function App() {
                         <Empty
                           title={
                             books.length
-                              ? "Что почитаем дальше?"
-                              : "Добавьте первую книгу"
+                              ? translate("Что почитаем дальше?")
+                              : translate("Добавьте первую книгу")
                           }
                           action={addButton}
                         >
-                          Выберите удобный темп — и ваш план чтения появится
-                          здесь.
+                          {translate(
+                            "Выберите удобный темп — и ваш план чтения появится здесь.",
+                          )}
                         </Empty>
                       </div>
                     )}
@@ -430,15 +458,15 @@ export default function App() {
                 <button
                   className="annual-summary panel"
                   onClick={() => go("goals")}
-                  aria-label="Моя цель на год"
+                  aria-label={translate("Моя цель на год")}
                 >
                   <span className="annual-summary-icon">
                     <Target size={21} />
                   </span>
                   <div>
-                    <span>Цель на {year} год</span>
+                    <span>{translate("Цель на {0} год", [year])}</span>
                     <strong>
-                      {done} из {goal} книг
+                      {translate("{0} из {1} книг", [done, goal])}
                     </strong>
                     <div className="progress-track">
                       <i
@@ -471,7 +499,9 @@ export default function App() {
                 onRest={async (b, date) => {
                   if (date < now) {
                     setToast(
-                      "Прошедшие задания сохраняются. Выберите сегодняшний или будущий день.",
+                      translate(
+                        "Прошедшие задания сохраняются. Выберите сегодняшний или будущий день.",
+                      ),
                     );
                     return;
                   }
@@ -508,7 +538,7 @@ export default function App() {
                       goals: { ...d.settings.goals, [year]: n },
                     },
                   }));
-                  setToast("Годовая цель сохранена.");
+                  setToast(translate("Годовая цель сохранена."));
                 }}
                 onPlan={setDetail}
                 addButton={addButton}
@@ -529,18 +559,24 @@ export default function App() {
                 }}
                 onChange={async (settings) => {
                   await commit((d) => ({ ...d, settings }));
-                  setToast("Настройки сохранены.");
+                  setToast(translate("Настройки сохранены."));
                 }}
                 onImport={async (next) => {
                   await commit(() => next);
-                  setToast("Резервная копия восстановлена.");
+                  setToast(translate("Резервная копия восстановлена."));
                 }}
                 onError={setToast}
               />
             )}
           </main>
         </div>
-        <nav className="bottom-nav" aria-label="Основная навигация">
+        {welcome && !account.user && (
+          <WelcomeDialog account={account} onClose={() => setWelcome(false)} />
+        )}
+        <nav
+          className="bottom-nav"
+          aria-label={translate("Основная навигация")}
+        >
           {nav.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -551,10 +587,10 @@ export default function App() {
               <Icon size={20} />
               <span>
                 {id === "progress"
-                  ? "Прогресс"
+                  ? translate("Прогресс")
                   : id === "books"
-                    ? "Книги"
-                    : label}
+                    ? translate("Книги")
+                    : translate(label)}
               </span>
             </button>
           ))}
@@ -601,7 +637,7 @@ export default function App() {
                 books: d.books.filter((b) => b.id !== detail.id),
               }));
               setDetail(null);
-              setToast("Книга удалена.");
+              setToast(translate("Книга удалена."));
             }}
             onComplete={async () => {
               const b = books.find((x) => x.id === detail.id)!;
@@ -645,7 +681,10 @@ export default function App() {
                 <span>{toast}</span>
               </>
             )}
-            <button aria-label="Скрыть сообщение" onClick={() => setToast("")}>
+            <button
+              aria-label={translate("Скрыть сообщение")}
+              onClick={() => setToast("")}
+            >
               ×
             </button>
           </div>
@@ -679,11 +718,11 @@ function SummaryCard({
       <div>
         <p>{label}</p>
         <strong>
-          {pages} <small>стр.</small>
+          {pages} <small>{translate("стр.")}</small>
           {chapters > 0 && (
             <span className="second-unit">
               {" "}
-              + {chapters} <small>гл.</small>
+              + {chapters} <small>{translate("гл.")}</small>
             </span>
           )}
         </strong>
@@ -714,18 +753,20 @@ function ReadingCard({
         <button
           className="cover-button"
           onClick={onPlan}
-          aria-label={`Открыть ${b.title}`}
+          aria-label={translate("Открыть {0}", [b.title])}
         >
           <BookCover book={b} />
         </button>
         <div className="reading-info">
           <div className="book-title-row">
             <span className="tag">
-              {b.unit === "pages" ? "ПО СТРАНИЦАМ" : "ПО ГЛАВАМ"}
+              {b.unit === "pages"
+                ? translate("ПО СТРАНИЦАМ")
+                : translate("ПО ГЛАВАМ")}
             </span>
             <button
               className="icon-btn"
-              aria-label={`Настройки книги ${b.title}`}
+              aria-label={translate("Настройки книги {0}", [b.title])}
               onClick={onEdit}
             >
               <MoreHorizontal size={20} />
@@ -734,10 +775,12 @@ function ReadingCard({
           <h3>
             <button onClick={onPlan}>{b.title}</button>
           </h3>
-          <p className="author">{b.author || "Автор не указан"}</p>
+          <p className="author">{b.author || translate("Автор не указан")}</p>
           <div className="progress-label">
             <span>
-              {read(b)} из {b.total} {unitLabel(b)}
+              {read(b)}
+              {translate(" из ")}
+              {b.total} {unitLabel(b)}
             </span>
             <strong>{Math.round((read(b) / b.total) * 100)}%</strong>
           </div>
@@ -747,14 +790,16 @@ function ReadingCard({
           <div className="today-task">
             <strong>
               {d.left
-                ? `${d.left} ${unitLabel(b)} осталось сегодня`
+                ? translate("{0} {1} осталось сегодня", [d.left, unitLabel(b)])
                 : d.target
-                  ? "План на сегодня выполнен"
-                  : "Сегодня можно отдохнуть"}
+                  ? translate("План на сегодня выполнен")
+                  : translate("Сегодня можно отдохнуть")}
             </strong>
             <small>
-              План: {d.target} · Прочитано сегодня: {actual(b, now)}{" "}
-              {unitLabel(b)}
+              {translate("План: ")}
+              {d.target}
+              {translate(" · Прочитано сегодня: ")}
+              {actual(b, now)} {unitLabel(b)}
             </small>
           </div>
         </div>
@@ -764,12 +809,17 @@ function ReadingCard({
           <Coffee size={17} />
           <div>
             <strong>
-              Можно наверстать: {owed} {unitLabel(b)}
+              {translate("Можно наверстать: ")}
+              {owed} {unitLabel(b)}
             </strong>
-            <span>Осталось за {debts.length} дн. Читайте в удобном темпе.</span>
+            <span>
+              {translate("Осталось за {0} дн. Читайте в удобном темпе.", [
+                debts.length,
+              ])}
+            </span>
           </div>
           <button className="text-btn" onClick={onPlan}>
-            Даты
+            {translate("Даты")}
             <ArrowUpRight size={14} />
           </button>
         </div>
@@ -777,23 +827,36 @@ function ReadingCard({
       <div className="reading-footer">
         <span>
           <CalendarDays size={14} />
-          {f ? "Прогноз: " + pretty(f) : "Нет доступных дней"}
+          {f
+            ? translate("Прогноз: ") + pretty(f)
+            : translate("Нет доступных дней")}
         </span>
         <div>
           <button className="text-btn plan-btn" onClick={onPlan}>
-            Посмотреть план
+            {translate("Посмотреть план")}
           </button>
           <button className="btn primary small" onClick={onRead}>
             <Plus size={15} />
-            Отметить прочитанное
+            {translate("Отметить прочитанное")}
           </button>
         </div>
       </div>
       {f && f > b.deadline && (
         <p className="pace-warning">
           {b.deadline < now
-            ? "Желаемая дата уже прошла. Выберите новый срок в настройках книги."
-            : `В этом темпе вы закончите позже срока. Чтобы успеть: около ${Math.ceil((b.total - read(b)) / Math.max(1, available(b, now, b.deadline).length))} ${unitLabel(b)} в доступный день с учётом долга.`}
+            ? translate(
+                "Желаемая дата уже прошла. Выберите новый срок в настройках книги.",
+              )
+            : translate(
+                "В этом темпе вы закончите позже срока. Чтобы успеть: около {0} {1} в доступный день с учётом долга.",
+                [
+                  Math.ceil(
+                    (b.total - read(b)) /
+                      Math.max(1, available(b, now, b.deadline).length),
+                  ),
+                  unitLabel(b),
+                ],
+              )}
         </p>
       )}
     </article>
@@ -822,14 +885,14 @@ function Library({
     (b) =>
       (filter === "all" || b.status === filter) &&
       `${b.title} ${b.author}`
-        .toLocaleLowerCase("ru")
-        .includes(search.toLocaleLowerCase("ru")),
+        .toLocaleLowerCase(getIntlLocale())
+        .includes(search.toLocaleLowerCase(getIntlLocale())),
   );
   return (
     <>
       <div className="page-heading">
         <div>
-          <h1>Мои книги</h1>
+          <h1>{translate("Мои книги")}</h1>
         </div>
         {addButton}
       </div>
@@ -839,7 +902,8 @@ function Library({
             className={filter === "all" ? "active" : ""}
             onClick={() => setFilter("all")}
           >
-            Все <span>{books.length}</span>
+            {translate("Все ")}
+            <span>{books.length}</span>
           </button>
           {Object.entries(statusNames).map(([key, name]) => (
             <button
@@ -847,7 +911,7 @@ function Library({
               className={filter === key ? "active" : ""}
               onClick={() => setFilter(key)}
             >
-              {name}
+              {translate(name)}
               <span>{books.filter((b) => b.status === key).length}</span>
             </button>
           ))}
@@ -855,8 +919,8 @@ function Library({
         <label className="search">
           <Search size={17} />
           <input
-            aria-label="Найти книгу"
-            placeholder="Название или автор"
+            aria-label={translate("Найти книгу")}
+            placeholder={translate("Название или автор")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -865,11 +929,15 @@ function Library({
       {!filtered.length ? (
         <div className="panel">
           <Empty
-            title={search ? "Книга не нашлась" : "На этой полке пока тихо"}
+            title={
+              search
+                ? translate("Книга не нашлась")
+                : translate("На этой полке пока тихо")
+            }
           >
             {search
-              ? "Попробуйте другое название или имя автора."
-              : "Добавьте книгу, которую давно хотелось открыть."}
+              ? translate("Попробуйте другое название или имя автора.")
+              : translate("Добавьте книгу, которую давно хотелось открыть.")}
           </Empty>
         </div>
       ) : (
@@ -879,17 +947,19 @@ function Library({
               <button
                 className="cover-button"
                 onClick={() => onPlan(b)}
-                aria-label={`Открыть ${b.title}`}
+                aria-label={translate("Открыть {0}", [b.title])}
               >
                 <BookCover book={b} large />
               </button>
               <span className={`status-tag ${b.status}`}>
-                {statusNames[b.status]}
+                {translate(statusNames[b.status])}
               </span>
               <h3>
                 <button onClick={() => onPlan(b)}>{b.title}</button>
               </h3>
-              <p className="author">{b.author || "Автор не указан"}</p>
+              <p className="author">
+                {b.author || translate("Автор не указан")}
+              </p>
               <div className="progress-label">
                 <span>
                   {read(b)} / {b.total} {unitLabel(b)}
@@ -903,7 +973,7 @@ function Library({
                 <button
                   className="btn secondary small"
                   onClick={() => onEdit(b)}
-                  aria-label={`Настройки ${b.title}`}
+                  aria-label={translate("Настройки {0}", [b.title])}
                 >
                   <Settings2 size={16} />
                 </button>
@@ -913,7 +983,7 @@ function Library({
                     onClick={() => onRead(b)}
                   >
                     <Plus size={15} />
-                    Записать чтение
+                    {translate("Записать чтение")}
                   </button>
                 ) : (
                   <button
@@ -923,8 +993,8 @@ function Library({
                     }
                   >
                     {b.status === "completed"
-                      ? "История чтения"
-                      : "Настроить чтение"}
+                      ? translate("История чтения")
+                      : translate("Настроить чтение")}
                     <ArrowUpRight size={15} />
                   </button>
                 )}
@@ -956,7 +1026,7 @@ function LogDialog({
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   return (
-    <Modal title="Ещё несколько страниц истории" onClose={onClose}>
+    <Modal title={translate("Ещё несколько страниц истории")} onClose={onClose}>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -965,7 +1035,11 @@ function LogDialog({
             await onSave(amount, day);
             onClose();
           } catch (e) {
-            setError(e instanceof Error ? e.message : "Не удалось сохранить.");
+            setError(
+              e instanceof Error
+                ? e.message
+                : translate("Не удалось сохранить."),
+            );
           } finally {
             setBusy(false);
           }
@@ -973,10 +1047,11 @@ function LogDialog({
       >
         <p className="log-title">{b.title}</p>
         <p className="muted">
-          Осталось в книге: {b.total - read(b)} {unitLabel(b)}
+          {translate("Осталось в книге: ")}
+          {b.total - read(b)} {unitLabel(b)}
         </p>
         <label>
-          Дата чтения
+          {translate("Дата чтения")}
           <input
             type="date"
             min={b.start}
@@ -987,7 +1062,9 @@ function LogDialog({
           />
         </label>
         <label>
-          Сколько {b.unit === "pages" ? "страниц" : "глав"} вы прочитали?
+          {b.unit === "pages"
+            ? translate("Сколько страниц вы прочитали?")
+            : translate("Сколько глав вы прочитали?")}
           <input
             autoFocus
             type="number"
@@ -1014,8 +1091,9 @@ function LogDialog({
             ))}
         </div>
         <p className="hint">
-          Записывайте объём за эту сессию, а не номер последней страницы. Он
-          сначала погасит самые ранние задания.
+          {translate(
+            "Записывайте объём за эту сессию, а не номер последней страницы. Он сначала погасит самые ранние задания.",
+          )}
         </p>
         {error && (
           <p className="notice" role="alert">
@@ -1024,10 +1102,10 @@ function LogDialog({
         )}
         <div className="modal-actions">
           <button className="btn secondary" type="button" onClick={onClose}>
-            Отмена
+            {translate("Отмена")}
           </button>
           <button className="btn primary" disabled={busy}>
-            {busy ? "Сохраняем…" : "Сохранить чтение"}
+            {busy ? translate("Сохраняем…") : translate("Сохранить чтение")}
             <Check size={16} />
           </button>
         </div>
@@ -1066,36 +1144,42 @@ function BookDetail({
         <div>
           <p className="author">{b.author}</p>
           <span className={`status-tag ${b.status}`}>
-            {statusNames[b.status]}
+            {translate(statusNames[b.status])}
           </span>
           <h3>
             {read(b)}{" "}
             <small>
-              из {b.total} {unitLabel(b)}
+              {translate("из ")}
+              {b.total} {unitLabel(b)}
             </small>
           </h3>
           <div className="progress-track">
             <i style={{ width: `${(read(b) / b.total) * 100}%` }} />
           </div>
           <p className="muted">
-            Начало: {pretty(b.start, true)}
+            {translate("Начало: ")}
+            {pretty(b.start, true)}
             {b.completedAt && (
               <>
                 <br />
-                Завершена: {pretty(b.completedAt, true)}
+                {translate("Завершена: ")}
+                {pretty(b.completedAt, true)}
               </>
             )}
           </p>
           <button className="text-btn" onClick={onEdit}>
-            Изменить настройки
+            {translate("Изменить настройки")}
             <Settings2 size={14} />
           </button>
         </div>
       </div>
       {debts.length > 0 && (
         <p className="notice">
-          У вас осталось {debts.reduce((n, t) => n + t.left, 0)} {unitLabel(b)}{" "}
-          долга. Можно прочитать их сегодня или постепенно наверстать.
+          {translate("У вас осталось ")}
+          {debts.reduce((n, t) => n + t.left, 0)} {unitLabel(b)}{" "}
+          {translate(
+            "долга. Можно прочитать их сегодня или постепенно наверстать.",
+          )}
         </p>
       )}
       <div className="tabs">
@@ -1103,19 +1187,20 @@ function BookDetail({
           className={tab === "plan" ? "active" : ""}
           onClick={() => setTab("plan")}
         >
-          План чтения
+          {translate("План чтения")}
         </button>
         <button
           className={tab === "debt" ? "active" : ""}
           onClick={() => setTab("debt")}
         >
-          Задолженность ({debts.length})
+          {translate("Задолженность (")}
+          {debts.length})
         </button>
         <button
           className={tab === "history" ? "active" : ""}
           onClick={() => setTab("history")}
         >
-          История
+          {translate("История")}
         </button>
       </div>
       <div className="detail-list">
@@ -1133,7 +1218,8 @@ function BookDetail({
               ))
           ) : (
             <p className="muted">
-              Записей пока нет. Начальный прогресс: {b.initial} {unitLabel(b)}
+              {translate("Записей пока нет. Начальный прогресс: ")}
+              {b.initial} {unitLabel(b)}
             </p>
           )
         ) : (
@@ -1144,12 +1230,15 @@ function BookDetail({
             >
               <span>
                 {pretty(t.date, true)}
-                {t.date === now && <small> · Сегодня</small>}
+                {t.date === now && <small>{translate(" · Сегодня")}</small>}
               </span>
               <span>
                 {t.target} {unitLabel(b)}{" "}
                 <small>
-                  · {t.left === 0 ? "Выполнено" : `осталось ${t.left}`}
+                  ·{" "}
+                  {t.left === 0
+                    ? translate("Выполнено")
+                    : translate("осталось {0}", [t.left])}
                 </small>
               </span>
             </div>
@@ -1161,17 +1250,20 @@ function BookDetail({
               className="btn secondary full"
               onClick={() => setLimit(limit + 60)}
             >
-              Показать ещё 60 дней
+              {translate("Показать ещё 60 дней")}
             </button>
           )}
         {tab === "plan" && !tasks.length && (
           <p className="muted">
-            План появится, когда книга будет на полке «Читаю сейчас» и будут
-            доступны дни для чтения.
+            {translate(
+              "План появится, когда книга будет на полке «Читаю сейчас» и будут доступны дни для чтения.",
+            )}
           </p>
         )}
         {tab === "debt" && !debts.length && (
-          <p className="muted">Всё спокойно — задолженностей нет.</p>
+          <p className="muted">
+            {translate("Всё спокойно — задолженностей нет.")}
+          </p>
         )}
       </div>
       <div className="detail-actions">
@@ -1179,10 +1271,10 @@ function BookDetail({
           <>
             <button className="btn primary" onClick={onRead}>
               <Plus size={16} />
-              Записать чтение
+              {translate("Записать чтение")}
             </button>
             <button className="text-btn" onClick={() => setConfirm("complete")}>
-              Завершить книгу
+              {translate("Завершить книгу")}
             </button>
           </>
         )}
@@ -1190,24 +1282,29 @@ function BookDetail({
           className="text-btn danger"
           onClick={() => setConfirm("delete")}
         >
-          Удалить книгу
+          {translate("Удалить книгу")}
         </button>
       </div>
       {confirm && (
         <div className="confirm-box">
           <strong>
             {confirm === "delete"
-              ? "Удалить книгу и всю историю чтения?"
-              : `Подтвердить оставшиеся ${b.total - read(b)} ${unitLabel(b)} как прочитанные сегодня?`}
+              ? translate("Удалить книгу и всю историю чтения?")
+              : translate(
+                  "Подтвердить оставшиеся {0} {1} как прочитанные сегодня?",
+                  [b.total - read(b), unitLabel(b)],
+                )}
           </strong>
           <p className="hint">
             {confirm === "delete"
-              ? "Вернуть данные можно будет из резервной копии."
-              : "Оставшийся объём будет записан как фактическое чтение. Книга засчитается в цель один раз."}
+              ? translate("Вернуть данные можно будет из резервной копии.")
+              : translate(
+                  "Оставшийся объём будет записан как фактическое чтение. Книга засчитается в цель один раз.",
+                )}
           </p>
           <div className="modal-actions">
             <button className="btn secondary" onClick={() => setConfirm(null)}>
-              Отмена
+              {translate("Отмена")}
             </button>
             <button
               className="btn primary"
@@ -1220,14 +1317,16 @@ function BookDetail({
                   setConfirm(null);
                 } catch {
                   setError(
-                    "Не удалось сохранить изменение. Попробуйте ещё раз.",
+                    translate(
+                      "Не удалось сохранить изменение. Попробуйте ещё раз.",
+                    ),
                   );
                 } finally {
                   setBusy(false);
                 }
               }}
             >
-              Подтвердить
+              {translate("Подтвердить")}
             </button>
           </div>
         </div>
@@ -1279,10 +1378,10 @@ function Calendar({
     <>
       <div className="page-heading">
         <div>
-          <h1>Календарь чтения</h1>
+          <h1>{translate("Календарь чтения")}</h1>
         </div>
         <button className="btn secondary" onClick={() => setCursor(now)}>
-          Сегодня
+          {translate("Сегодня")}
         </button>
       </div>
       <section className="panel calendar-panel">
@@ -1290,15 +1389,19 @@ function Calendar({
           <div className="month-switch">
             <button
               className="icon-btn"
-              aria-label="Предыдущий период"
+              aria-label={translate("Предыдущий период")}
               onClick={() => move(-1)}
             >
               <ChevronLeft size={20} />
             </button>
-            <h2>{format(parseISO(cursor), "LLLL yyyy", { locale: ru })}</h2>
+            <h2>
+              {format(parseISO(cursor), "LLLL yyyy", {
+                locale: getDateLocale(),
+              })}
+            </h2>
             <button
               className="icon-btn"
-              aria-label="Следующий период"
+              aria-label={translate("Следующий период")}
               onClick={() => move(1)}
             >
               <ChevronRight size={20} />
@@ -1306,11 +1409,11 @@ function Calendar({
           </div>
           <div className="calendar-controls">
             <select
-              aria-label="Книги в календаре"
+              aria-label={translate("Книги в календаре")}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             >
-              <option value="all">Все книги</option>
+              <option value="all">{translate("Все книги")}</option>
               {books.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.title}
@@ -1322,19 +1425,27 @@ function Calendar({
                 className={view === "month" ? "active" : ""}
                 onClick={() => setView("month")}
               >
-                Месяц
+                {translate("Месяц")}
               </button>
               <button
                 className={view === "week" ? "active" : ""}
                 onClick={() => setView("week")}
               >
-                Неделя
+                {translate("Неделя")}
               </button>
             </div>
           </div>
         </div>
         <div className="calendar-weekhead">
-          {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((d) => (
+          {[
+            translate("Пн"),
+            translate("Вт"),
+            translate("Ср"),
+            translate("Чт"),
+            translate("Пт"),
+            translate("Сб"),
+            translate("Вс"),
+          ].map((d) => (
             <span key={d}>{d}</span>
           ))}
         </div>
@@ -1361,7 +1472,7 @@ function Calendar({
                   setSelected(d);
                   setError("");
                 }}
-                aria-label={`${pretty(d, true)}${hasDebt ? ", есть задолженность" : ""}`}
+                aria-label={`${pretty(d, true)}${hasDebt ? translate(", есть задолженность") : ""}`}
                 className={`calendar-day ${d === now ? "current" : ""} ${hasDebt ? "overdue" : done || hasRead ? "done" : ""} ${d.slice(0, 7) !== cursor.slice(0, 7) && view === "month" ? "outside" : ""}`}
               >
                 <span className="day-number">{parseISO(d).getDate()}</span>
@@ -1376,16 +1487,17 @@ function Calendar({
                     return target > 0 || fact > 0 ? (
                       <span key={u}>
                         <span className="day-plan">
-                          {target} {u === "pages" ? "стр." : "гл."}
+                          {target}{" "}
+                          {u === "pages" ? translate("стр.") : translate("гл.")}
                         </span>
                         <small>
                           {fact > 0
-                            ? "Прочитано: " + fact
+                            ? translate("Прочитано: ") + fact
                             : hasDebt
-                              ? "Можно наверстать"
+                              ? translate("Можно наверстать")
                               : d === now
-                                ? "На сегодня"
-                                : "По плану"}
+                                ? translate("На сегодня")
+                                : translate("По плану")}
                         </small>
                       </span>
                     ) : null;
@@ -1393,7 +1505,7 @@ function Calendar({
                   {rest && (
                     <span className="day-rest">
                       <Coffee size={14} />
-                      <small>Выходной</small>
+                      <small>{translate("Выходной")}</small>
                     </span>
                   )}
                 </div>
@@ -1405,25 +1517,26 @@ function Calendar({
         <div className="calendar-legend">
           <span>
             <i className="legend-dot sage" />
-            Выполнено
+            {translate("Выполнено")}
           </span>
           <span>
             <i className="legend-dot olive" />
-            Сегодня
+            {translate("Сегодня")}
           </span>
           <span>
             <i className="legend-dot orange" />
-            Можно наверстать
+            {translate("Можно наверстать")}
           </span>
           <span>
             <i className="legend-dot cream" />
-            Отдых
+            {translate("Отдых")}
           </span>
         </div>
       </section>
       <p className="hint">
-        Нажмите на дату, чтобы посмотреть план, записать чтение задним числом
-        или запланировать отдых.
+        {translate(
+          "Нажмите на дату, чтобы посмотреть план, записать чтение задним числом или запланировать отдых.",
+        )}
       </p>
       {selected && (
         <Modal
@@ -1441,16 +1554,21 @@ function Calendar({
                     <div>
                       <strong>{b.title}</strong>
                       <p className="muted">
-                        План: {t?.target ?? 0} {unitLabel(b)} · Факт:{" "}
-                        {actual(b, selected)} {unitLabel(b)}
+                        {translate("План: ")}
+                        {t?.target ?? 0} {unitLabel(b)}
+                        {translate(" · Факт:")} {actual(b, selected)}{" "}
+                        {unitLabel(b)}
                       </p>
                       {t && selected < now && t.left > 0 && (
                         <p className="debt-text">
-                          Осталось от задания: {t.left} {unitLabel(b)}
+                          {translate("Осталось от задания: ")}
+                          {t.left} {unitLabel(b)}
                         </p>
                       )}
                       {isRest(b, selected) && (
-                        <small className="muted">Выходной от чтения</small>
+                        <small className="muted">
+                          {translate("Выходной от чтения")}
+                        </small>
                       )}
                     </div>
                     <div className="calendar-detail-actions">
@@ -1463,7 +1581,7 @@ function Calendar({
                           }}
                         >
                           <Plus size={15} />
-                          Записать
+                          {translate("Записать")}
                         </button>
                       )}
                       {selected >= now && b.status === "reading" && (
@@ -1473,13 +1591,15 @@ function Calendar({
                             try {
                               await onRest(b, selected);
                             } catch {
-                              setError("Не удалось сохранить выходной.");
+                              setError(
+                                translate("Не удалось сохранить выходной."),
+                              );
                             }
                           }}
                         >
                           {b.excluded.includes(selected)
-                            ? "Убрать выходной"
-                            : "День отдыха"}
+                            ? translate("Убрать выходной")
+                            : translate("День отдыха")}
                         </button>
                       )}
                     </div>
@@ -1488,7 +1608,7 @@ function Calendar({
               })
           ) : (
             <p className="muted">
-              Добавьте первую книгу — и здесь появится ваш план.
+              {translate("Добавьте первую книгу — и здесь появится ваш план.")}
             </p>
           )}
           {error && (
@@ -1516,7 +1636,7 @@ function Analytics({
 }) {
   const [unit, setUnit] = useState<Unit>("pages");
   const volumes = allBooks.filter((b) => b.unit === unit);
-  const unitText = unit === "pages" ? "стр." : "гл.";
+  const unitText = unit === "pages" ? translate("стр.") : translate("гл.");
   const logs = volumes
     .flatMap((b) => b.entries)
     .filter((e) => e.date.startsWith(String(year)));
@@ -1531,19 +1651,19 @@ function Analytics({
   const weekly = Array.from({ length: 7 }, (_, i) => {
     const d = plus(start, i);
     return {
-      date: format(parseISO(d), "EEEEEE", { locale: ru }),
-      План: volumes.reduce((s, b) => s + (b.tasks[d] ?? 0), 0),
-      Факт: volumes.reduce((s, b) => s + actual(b, d), 0),
+      date: format(parseISO(d), "EEEEEE", { locale: getDateLocale() }),
+      plan: volumes.reduce((s, b) => s + (b.tasks[d] ?? 0), 0),
+      actual: volumes.reduce((s, b) => s + actual(b, d), 0),
     };
   });
   const monthly = Array.from({ length: 12 }, (_, i) => {
     const prefix = `${year}-${String(i + 1).padStart(2, "0")}`;
     return {
-      name: format(new Date(year, i, 1), "LLL", { locale: ru }),
-      Объём: logs
+      name: format(new Date(year, i, 1), "LLL", { locale: getDateLocale() }),
+      volume: logs
         .filter((e) => e.date.startsWith(prefix))
         .reduce((s, e) => s + e.amount, 0),
-      Дни: new Set(
+      days: new Set(
         logs.filter((e) => e.date.startsWith(prefix)).map((e) => e.date),
       ).size,
     };
@@ -1589,40 +1709,44 @@ function Analytics({
     <>
       <div className="page-heading">
         <div>
-          <h1>Прогресс</h1>
+          <h1>{translate("Прогресс")}</h1>
         </div>
         <div className="segmented">
           <button
             className={unit === "pages" ? "active" : ""}
             onClick={() => setUnit("pages")}
           >
-            Страницы
+            {translate("Страницы")}
           </button>
           <button
             className={unit === "chapters" ? "active" : ""}
             onClick={() => setUnit("chapters")}
           >
-            Главы
+            {translate("Главы")}
           </button>
         </div>
       </div>
       <div className="analytics-stats">
         {[
-          { icon: <Trophy size={20} />, value: done, label: "Завершено книг" },
+          {
+            icon: <Trophy size={20} />,
+            value: done,
+            label: translate("Завершено книг"),
+          },
           {
             icon: <CalendarDays size={20} />,
             value: days.size,
-            label: "Дней с чтением",
+            label: translate("Дней с чтением"),
           },
           {
             icon: <Flame size={20} />,
             value: streak(allBooks, now),
-            label: "Текущая серия, дней",
+            label: translate("Текущая серия, дней"),
           },
           {
             icon: <BookOpen size={20} />,
             value: logs.reduce((s, e) => s + e.amount, 0),
-            label: `Прочитано, ${unitText}`,
+            label: translate("Прочитано, {0}", [unitText]),
           },
         ].map((s) => (
           <div className="summary-card" key={s.label}>
@@ -1637,8 +1761,11 @@ function Analytics({
       <div className="charts-grid">
         <section className="panel chart-panel">
           <div className="section-heading">
-            <h3>План и факт</h3>
-            <small className="muted">Текущая неделя · {unitText}</small>
+            <h3>{translate("План и факт")}</h3>
+            <small className="muted">
+              {translate("Текущая неделя · ")}
+              {unitText}
+            </small>
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart
@@ -1663,7 +1790,7 @@ function Analytics({
                   String(
                     Math.max(
                       1,
-                      ...weekly.flatMap((day) => [day.План, day.Факт]),
+                      ...weekly.flatMap((day) => [day.plan, day.actual]),
                     ),
                   ).length *
                     7 +
@@ -1676,15 +1803,25 @@ function Analytics({
               />
               <Tooltip />
               <Legend iconType="circle" />
-              <Bar dataKey="План" fill="#B4C292" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Факт" fill="#736F4E" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="plan"
+                name={translate("План")}
+                fill="#B4C292"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="actual"
+                name={translate("Факт")}
+                fill="#736F4E"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </section>
         <section className="panel chart-panel">
           <div className="section-heading">
-            <h3>Книжные месяцы</h3>
-            <small className="muted">Дни с чтением</small>
+            <h3>{translate("Книжные месяцы")}</h3>
+            <small className="muted">{translate("Дни с чтением")}</small>
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart
@@ -1712,7 +1849,8 @@ function Analytics({
               <Tooltip />
               <Line
                 type="monotone"
-                dataKey="Дни"
+                dataKey="days"
+                name={translate("Дни")}
                 stroke="#736F4E"
                 strokeWidth={2.5}
                 dot={{ fill: "#B4C292", r: 4 }}
@@ -1723,8 +1861,11 @@ function Analytics({
       </div>
       <section className="panel heatmap-panel">
         <div className="section-heading">
-          <h3>Год маленьких шагов</h3>
-          <small className="muted">Дни с чтением · {year}</small>
+          <h3>{translate("Год маленьких шагов")}</h3>
+          <small className="muted">
+            {translate("Дни с чтением · ")}
+            {year}
+          </small>
         </div>
         <div className="heatmap-scroll">
           <div className="heatmap">
@@ -1745,16 +1886,16 @@ function Analytics({
           </div>
         </div>
         <div className="heatmap-legend">
-          <small>Меньше</small>
+          <small>{translate("Меньше")}</small>
           {[0, 1, 2, 3].map((i) => (
             <i key={i} className={`heat-cell level-${i}`} />
           ))}
-          <small>Больше</small>
+          <small>{translate("Больше")}</small>
         </div>
       </section>
       <div className="charts-grid">
         <section className="panel book-rings">
-          <h3>Прогресс ваших историй</h3>
+          <h3>{translate("Прогресс ваших историй")}</h3>
           {books.length ? (
             <div className="ring-list">
               {books
@@ -1770,31 +1911,38 @@ function Analytics({
                 ))}
             </div>
           ) : (
-            <p className="muted">Здесь появится прогресс добавленных книг.</p>
+            <p className="muted">
+              {translate("Здесь появится прогресс добавленных книг.")}
+            </p>
           )}
         </section>
         <section className="panel insights">
-          <h3>В своём ритме</h3>
+          <h3>{translate("В своём ритме")}</h3>
           <div className="list-row">
-            <span>Годовая цель</span>
+            <span>{translate("Годовая цель")}</span>
             <strong>
-              {done} / {goal} книг
+              {done} / {goal}
+              {translate(" книг")}
             </strong>
           </div>
           <div className="progress-track">
             <i style={{ width: `${Math.min(100, (done / goal) * 100)}%` }} />
           </div>
           <div className="list-row">
-            <span>Завершённые дни без долгов</span>
+            <span>{translate("Завершённые дни без долгов")}</span>
             <strong>{debtFree}</strong>
           </div>
           <div className="list-row">
-            <span>Прогноз к концу года</span>
-            <strong>{prediction} книг</strong>
+            <span>{translate("Прогноз к концу года")}</span>
+            <strong>
+              {prediction}
+              {translate(" книг")}
+            </strong>
           </div>
           <p className="hint">
-            Прогноз основан на числе завершённых книг и прошедших днях года.
-            Страницы и главы считаются отдельно.
+            {translate(
+              "Прогноз основан на числе завершённых книг и прошедших днях года. Страницы и главы считаются отдельно.",
+            )}
           </p>
         </section>
       </div>
@@ -1824,7 +1972,7 @@ function Goals({
     <>
       <div className="page-heading">
         <div>
-          <h1>Цели на {year} год</h1>
+          <h1>{translate("Цели на {0} год", [year])}</h1>
         </div>
         {addButton}
       </div>
@@ -1834,14 +1982,19 @@ function Goals({
             {Math.round((completed.length / goal) * 100)}
             <small>%</small>
           </strong>
-          <span>годовой цели</span>
+          <span>{translate("годовой цели")}</span>
         </ProgressRing>
         <div>
           <h2>
-            {completed.length} из {goal} историй уже с вами
+            {translate("{0} из {1} историй уже с вами", [
+              completed.length,
+              goal,
+            ])}
           </h2>
           <p className="muted">
-            В библиотеке: {books.length} · Осталось до цели:{" "}
+            {translate("В библиотеке: ")}
+            {books.length}
+            {translate(" · Осталось до цели:")}{" "}
             {Math.max(0, goal - completed.length)}
           </p>
           <form
@@ -1858,9 +2011,9 @@ function Goals({
             }}
           >
             <label>
-              Моя цель на год
+              {translate("Моя цель на год")}
               <input
-                aria-label="Количество книг на год"
+                aria-label={translate("Количество книг на год")}
                 type="number"
                 required
                 min="1"
@@ -1870,13 +2023,13 @@ function Goals({
               />
             </label>
             <button className="btn primary" disabled={busy}>
-              Сохранить цель
+              {translate("Сохранить цель")}
             </button>
           </form>
         </div>
       </section>
       <div className="section-heading">
-        <h2>Истории, которые вы прочитали</h2>
+        <h2>{translate("Истории, которые вы прочитали")}</h2>
         <Trophy size={22} />
       </div>
       {completed.length ? (
@@ -1889,7 +2042,7 @@ function Goals({
             >
               <BookCover book={b} />
               <div>
-                <span className="tag">КНИГА ЗАВЕРШЕНА</span>
+                <span className="tag">{translate("КНИГА ЗАВЕРШЕНА")}</span>
                 <h3>{b.title}</h3>
                 <p className="muted">{b.author}</p>
                 <small>{b.completedAt && pretty(b.completedAt, true)}</small>
@@ -1900,10 +2053,10 @@ function Goals({
         </div>
       ) : (
         <div className="panel">
-          <Empty title="Впереди — целая полка открытий">
-            Завершённые книги будут появляться здесь.
+          <Empty title={translate("Впереди — целая полка открытий")}>
+            {translate("Завершённые книги будут появляться здесь.")}
             <br />
-            Каждая из них засчитывается в цель ровно один раз.
+            {translate("Каждая из них засчитывается в цель ровно один раз.")}
           </Empty>
         </div>
       )}
@@ -1953,10 +2106,14 @@ function SettingsPage({
     if (!file) return;
     try {
       if (file.size > 50 * 1024 * 1024)
-        throw new Error("Размер файла превышает 50 МБ.");
+        throw new Error(translate("Размер файла превышает 50 МБ."));
       setBackup(parseBackup(await file.text()));
     } catch (e) {
-      onError(e instanceof Error ? e.message : "Не удалось прочитать файл.");
+      onError(
+        e instanceof Error
+          ? e.message
+          : translate("Не удалось прочитать файл."),
+      );
     }
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -1964,10 +2121,13 @@ function SettingsPage({
     <>
       <div className="page-heading">
         <div>
-          <h1>Настройки</h1>
+          <h1>{translate("Настройки")}</h1>
         </div>
       </div>
       <AccountPanel account={account} />
+      <section className="panel settings-panel language-panel">
+        <LanguagePicker />
+      </section>
       <div className="settings-layout">
         <form
           className="panel settings-panel"
@@ -1988,11 +2148,11 @@ function SettingsPage({
           <div className="section-heading">
             <h3>
               <Target size={19} />
-              Ваши предпочтения
+              {translate("Ваши предпочтения")}
             </h3>
           </div>
           <label>
-            Годовая цель на {year} год, книг
+            {translate("Годовая цель на {0} год, книг", [year])}
             <input
               type="number"
               min="1"
@@ -2002,18 +2162,19 @@ function SettingsPage({
               onChange={(e) => setGoal(+e.target.value)}
             />
           </label>
-          <label>Выходные по умолчанию</label>
+          <label>{translate("Выходные по умолчанию")}</label>
           <RestPicker
             value={settings.restDays}
             onChange={(restDays) => setSettings({ ...settings, restDays })}
           />
           <p className="hint">
-            Используются для новых книг. Выходные существующей книги меняются в
-            её настройках.
+            {translate(
+              "Используются для новых книг. Выходные существующей книги меняются в её настройках.",
+            )}
           </p>
 
           <label>
-            Режим по умолчанию
+            {translate("Режим по умолчанию")}
             <select
               value={settings.mode}
               onChange={(e) =>
@@ -2023,12 +2184,14 @@ function SettingsPage({
                 })
               }
             >
-              <option value="deadline">Распределить до даты</option>
-              <option value="pace">Читать в своём темпе</option>
+              <option value="deadline">
+                {translate("Распределить до даты")}
+              </option>
+              <option value="pace">{translate("Читать в своём темпе")}</option>
             </select>
           </label>
           <button className="btn primary" disabled={busy}>
-            Сохранить настройки
+            {translate("Сохранить настройки")}
             <Check size={16} />
           </button>
         </form>
@@ -2036,23 +2199,24 @@ function SettingsPage({
           <section className="panel settings-panel">
             <h3>
               <Download size={19} />
-              Резервная копия
+              {translate("Резервная копия")}
             </h3>
             <p className="muted">
-              Дополнительная копия всех книг и настроек в файле. Можно сохранить
-              её или восстановить библиотеку из ранее скачанного файла.
+              {translate(
+                "Дополнительная копия всех книг и настроек в файле. Можно сохранить её или восстановить библиотеку из ранее скачанного файла.",
+              )}
             </p>
             <div className="button-row">
               <button className="btn secondary" onClick={exportData}>
                 <Download size={16} />
-                Экспорт JSON
+                {translate("Экспорт JSON")}
               </button>
               <button
                 className="btn secondary"
                 onClick={() => fileRef.current?.click()}
               >
                 <Upload size={16} />
-                Импорт JSON
+                {translate("Импорт JSON")}
               </button>
               <input
                 ref={fileRef}
@@ -2066,11 +2230,12 @@ function SettingsPage({
           <section className="panel settings-panel install-panel">
             <h3>
               <BookMarked size={19} />
-              Ваша библиотека всегда рядом
+              {translate("Ваша библиотека всегда рядом")}
             </h3>
             <p className="muted">
-              Установите приложение на главный экран и читайте свой план даже
-              без интернета.
+              {translate(
+                "Установите приложение на главный экран и читайте свой план даже без интернета.",
+              )}
             </p>
             {install ? (
               <button
@@ -2078,18 +2243,21 @@ function SettingsPage({
                 onClick={() =>
                   onInstall().catch(() =>
                     onError(
-                      "Установка не завершена. Попробуйте через меню браузера.",
+                      translate(
+                        "Установка не завершена. Попробуйте через меню браузера.",
+                      ),
                     ),
                   )
                 }
               >
                 <Download size={16} />
-                Установить приложение
+                {translate("Установить приложение")}
               </button>
             ) : (
               <p className="hint">
-                Android: Chrome → ⋮ → «Добавить на главный экран». iPhone:
-                Safari → «Поделиться» → «На экран Домой».
+                {translate(
+                  "Android: Chrome → ⋮ → «Добавить на главный экран». iPhone: Safari → «Поделиться» → «На экран Домой».",
+                )}
               </p>
             )}
           </section>
@@ -2098,54 +2266,66 @@ function SettingsPage({
       <details className="panel help-panel">
         <summary>
           <CircleHelp size={19} />
-          Как пользоваться
+          {translate("Как пользоваться")}
         </summary>
         <div className="help-grid">
           <div>
             <span>01</span>
-            <strong>Добавьте книгу</strong>
-            <p>Название, объём, удобный ритм. Всё остальное мы посчитаем.</p>
+            <strong>{translate("Добавьте книгу")}</strong>
+            <p>
+              {translate(
+                "Название, объём, удобный ритм. Всё остальное мы посчитаем.",
+              )}
+            </p>
           </div>
           <div>
             <span>02</span>
-            <strong>Читайте в удовольствие</strong>
+            <strong>{translate("Читайте в удовольствие")}</strong>
             <p>
-              Смотрите задание на сегодня и записывайте фактический объём
-              чтения.
+              {translate(
+                "Смотрите задание на сегодня и записывайте фактический объём чтения.",
+              )}
             </p>
           </div>
           <div>
             <span>03</span>
-            <strong>Не переживайте о пропусках</strong>
+            <strong>{translate("Не переживайте о пропусках")}</strong>
             <p>
-              Дополнительное чтение сначала погашает старые задания, затем
-              новые.
+              {translate(
+                "Дополнительное чтение сначала погашает старые задания, затем новые.",
+              )}
             </p>
           </div>
           <div>
             <span>04</span>
-            <strong>Сохраняйте свои истории</strong>
+            <strong>{translate("Сохраняйте свои истории")}</strong>
             <p>
-              Следите за прогрессом и регулярно экспортируйте резервную копию.
+              {translate(
+                "Следите за прогрессом и регулярно экспортируйте резервную копию.",
+              )}
             </p>
           </div>
         </div>
       </details>
       {backup && (
         <Modal
-          title="Восстановить резервную копию?"
+          title={translate("Восстановить резервную копию?")}
           onClose={() => setBackup(null)}
         >
           <p>
-            В файле: {backup.books.length} книг. Текущая библиотека будет
-            полностью заменена данными из файла.
+            {translate(
+              "В файле: {0} книг. Текущая библиотека будет полностью заменена данными из файла.",
+              [backup.books.length],
+            )}
           </p>
           <p className="notice">
-            Сначала экспортируйте текущие данные, если хотите сохранить их.
+            {translate(
+              "Сначала экспортируйте текущие данные, если хотите сохранить их.",
+            )}
           </p>
           <div className="modal-actions">
             <button className="btn secondary" onClick={() => setBackup(null)}>
-              Отмена
+              {translate("Отмена")}
             </button>
             <button
               className="btn primary"
@@ -2161,7 +2341,7 @@ function SettingsPage({
                 }
               }}
             >
-              Заменить и восстановить
+              {translate("Заменить и восстановить")}
             </button>
           </div>
         </Modal>
@@ -2191,18 +2371,22 @@ function DebtSummary({
       <Coffee size={20} />
       <div>
         <strong>
-          Можно постепенно наверстать:{" "}
-          {[pages ? `${pages} стр.` : "", chapters ? `${chapters} гл.` : ""]
+          {translate("Можно постепенно наверстать:")}{" "}
+          {[
+            pages ? translate("{0} стр.", [pages]) : "",
+            chapters ? translate("{0} гл.", [chapters]) : "",
+          ]
             .filter(Boolean)
-            .join(" и ")}
+            .join(translate(" и "))}
         </strong>
         <p>
-          Это непогашенные задания за прошлые дни. Дополнительное чтение
-          зачтётся в них первым.
+          {translate(
+            "Это непогашенные задания за прошлые дни. Дополнительное чтение зачтётся в них первым.",
+          )}
         </p>
       </div>
       <button className="text-btn" onClick={onOpen}>
-        Посмотреть даты
+        {translate("Посмотреть даты")}
         <ArrowUpRight size={16} />
       </button>
     </div>

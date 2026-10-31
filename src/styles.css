@@ -2925,6 +2925,52 @@ label {
     transform: rotate(360deg);
   }
 }
+.language-panel {
+  margin-bottom: 20px;
+}
+.language-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.language-picker select {
+  width: 100%;
+  min-height: 44px;
+}
+.welcome-intro {
+  color: #736f4e;
+  margin-bottom: 20px;
+}
+.welcome-intro p {
+  margin-top: 10px;
+  line-height: 1.6;
+}
+.welcome-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 20px;
+}
+.welcome-notice > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.welcome-notice p {
+  margin: 8px 0 0;
+  line-height: 1.65;
+}
+.welcome-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+.welcome-actions .btn {
+  white-space: normal;
+  min-height: 46px;
+}
 @media (prefers-reduced-motion: reduce) {
   .sync-spinning {
     animation: none;

@@ -1,4 +1,5 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { translate } from "./i18n";
+import { createClient } from "@supabase/supabase-js";
 import type { CloudRepository } from "./sync";
 import { parseBackup } from "./db";
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -63,9 +64,9 @@ export const cloudRepository: CloudRepository | null = supabase
     }
   : null;
 export async function loginWithGoogle() {
-  if (!supabase) throw new Error("Вход в аккаунт ещё не подключён.");
+  if (!supabase) throw new Error(translate("Вход в аккаунт ещё не подключён."));
   if (!navigator.onLine)
-    throw new Error("Для входа через Google нужен интернет.");
+    throw new Error(translate("Для входа через Google нужен интернет."));
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -76,12 +77,14 @@ export async function loginWithGoogle() {
   });
   if (error)
     throw new Error(
-      "Не удалось открыть вход через Google. Попробуйте ещё раз.",
+      translate("Не удалось открыть вход через Google. Попробуйте ещё раз."),
     );
 }
 export async function logout() {
   if (!supabase) return;
   const { error } = await supabase.auth.signOut({ scope: "local" });
   if (error)
-    throw new Error("Не удалось выйти из аккаунта. Попробуйте ещё раз.");
+    throw new Error(
+      translate("Не удалось выйти из аккаунта. Попробуйте ещё раз."),
+    );
 }
