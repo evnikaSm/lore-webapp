@@ -1761,6 +1761,16 @@ input[type="date"]::-webkit-date-and-time-value {
 .summary-card.green {
   background: #b4c29222;
 }
+.summary-card.orange {
+  background: #d17a2212;
+  border-color: #d17a2255;
+}
+.summary-card.orange p,
+.summary-card.orange strong,
+.summary-card.orange strong small,
+.summary-card.orange .stat-icon {
+  color: var(--color-terracotta);
+}
 .dashboard-columns {
   display: block;
 }

@@ -404,6 +404,7 @@ export default function App() {
                       label={translate("Осталось")}
                       books={active}
                       value={(b) => daily(b, now).left}
+                      orange
                     />
                   </div>
                 )}
@@ -699,12 +700,14 @@ function SummaryCard({
   books,
   value,
   green = false,
+  orange = false,
 }: {
   icon: ReactNode;
   label: string;
   books: Book[];
   value: (b: Book) => number;
   green?: boolean;
+  orange?: boolean;
 }) {
   const pages = books
       .filter((b) => b.unit === "pages")
@@ -713,7 +716,7 @@ function SummaryCard({
       .filter((b) => b.unit === "chapters")
       .reduce((s, b) => s + value(b), 0);
   return (
-    <div className={`summary-card ${green ? "green" : ""}`}>
+    <div className={`summary-card ${green ? "green" : ""} ${orange ? "orange" : ""}`}>
       <span className="stat-icon">{icon}</span>
       <div>
         <p>{label}</p>
