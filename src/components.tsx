@@ -542,7 +542,7 @@ export function BookWizard({
                 />
               </label>
             )}
-            <div className="form-row">
+            <div className="form-row date-fields">
               <label>
                 {translate("Начало чтения")}
                 <input
@@ -553,7 +553,7 @@ export function BookWizard({
                 />
               </label>
               <label>
-                {translate("Желаемая дата окончания")}
+                {translate("Дата окончания")}
                 <input
                   type="date"
                   value={draft.deadline}

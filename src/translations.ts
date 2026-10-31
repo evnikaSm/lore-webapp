@@ -1228,9 +1228,9 @@ export const messages: Record<string, { en: string; pl: string }> = {
     en: "Reading starts",
     pl: "Początek czytania",
   },
-  "Желаемая дата окончания": {
-    en: "Target finish date",
-    pl: "Planowana data ukończenia",
+  "Дата окончания": {
+    en: "Finish date",
+    pl: "Data zakończenia",
   },
   "Год завершения": {
     en: "Completion year",
